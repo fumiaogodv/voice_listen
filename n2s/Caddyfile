@@ -1,0 +1,10 @@
+# 反向代理配置示例（Caddy，自动 HTTPS + Basic Auth）
+# 部署到 N100 后替换域名与用户名/密码哈希。
+# 生成密码哈希：caddy hash-password
+
+n2s.你的域名.com {
+    basicauth {
+        用户名 密码的bcrypt哈希
+    }
+    reverse_proxy 127.0.0.1:8000
+}

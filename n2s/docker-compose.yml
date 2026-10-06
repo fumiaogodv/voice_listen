@@ -1,0 +1,14 @@
+services:
+  n2s:
+    build: .
+    container_name: n2s
+    volumes:
+      # 整个 data 目录挂载：notes（你的笔记）+ audio_cache（音频缓存）+ n2s.db（数据库）
+      # 你只需要往 host 端的 ./data/notes 里放笔记，其余由程序自动生成
+      - ./data:/app/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - TTS_VOICE=zh-CN-XiaoxiaoNeural
+      - READ_NUMBER_AS_ORDINAL=1
+    restart: unless-stopped

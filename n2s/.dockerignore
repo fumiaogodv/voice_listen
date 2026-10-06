@@ -1,0 +1,11 @@
+# Docker 构建忽略：避免把本地数据/缓存打进镜像
+__pycache__/
+*.pyc
+.venv/
+data/
+*.db
+*.mp3
+.git/
+.gitignore
+sample/
+*.md
