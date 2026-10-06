@@ -13,11 +13,7 @@ COPY static ./static
 # 数据目录（部署时挂载为卷）
 RUN mkdir -p /app/data/notes /app/data/audio_cache
 
-# 非 root 用户
-RUN useradd -m n2s
-RUN chown -R n2s:n2s /app/data
-USER n2s
-
 EXPOSE 8000
 
+# 以 root 运行：个人自用工具，避免挂载卷属主/权限错配导致 SQLite 只读
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

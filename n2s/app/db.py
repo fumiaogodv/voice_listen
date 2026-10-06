@@ -52,8 +52,17 @@ def _conn() -> sqlite3.Connection:
 
 def init_db():
     c = _conn()
-    c.executescript(SCHEMA)
-    c.commit()
+    try:
+        c.executescript(SCHEMA)
+        c.commit()
+    except sqlite3.OperationalError as e:
+        if "readonly" in str(e).lower():
+            raise RuntimeError(
+                f"数据库只读，无法写入 {DB_PATH}。"
+                "请检查挂载目录权限（容器需对该目录有写权限），"
+                "或确认 n2s.db 文件属主正确。"
+            ) from e
+        raise
 
 
 def _now() -> str:

@@ -30,6 +30,7 @@
   let lastReport = 0;
   let reportTimer = null;
   let userInteracted = false; // iOS 自动播放限制：首次播放需点击
+  let autoScroll = true;       // 是否自动滚动到当前播放字段（默认跟随）
 
   // ---------- 工具 ----------
   function fmt(sec) {
@@ -192,14 +193,38 @@
     activeSegIdx = idx;
     if (idx >= 0 && currentSegEls[idx]) {
       currentSegEls[idx].classList.add('active');
-      // 注意：不自动滚动，避免打断用户翻阅。需要定位时点「定位」按钮。
+      // 仅在「自动跟随」开启时才滚动，避免打断用户翻阅
+      if (autoScroll) {
+        currentSegEls[idx].scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
     }
   }
 
-  // 手动回到当前播放字段
+  // 切换「自动跟随」：点一下关（手动浏览），再点一下开（自动拖回）
+  function toggleAutoScroll() {
+    autoScroll = !autoScroll;
+    syncLocateBtn();
+    // 重新开启时，立即定位到当前播放字段
+    if (autoScroll) {
+      locateToActive();
+    }
+  }
+
+  // 定位到当前播放字段
   function locateToActive() {
     if (activeSegIdx >= 0 && currentSegEls[activeSegIdx]) {
       currentSegEls[activeSegIdx].scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  // 同步按钮视觉状态（开启=高亮，关闭=灰）
+  function syncLocateBtn() {
+    if (autoScroll) {
+      btnLocate.textContent = '跟随中';
+      btnLocate.classList.add('on');
+    } else {
+      btnLocate.textContent = '已锁定';
+      btnLocate.classList.remove('on');
     }
   }
 
@@ -339,7 +364,7 @@
   btnBack.addEventListener('click', () => skip(-10));
   btnFwd.addEventListener('click', () => skip(10));
   btnRate.addEventListener('click', cycleRate);
-  btnLocate.addEventListener('click', locateToActive);
+  btnLocate.addEventListener('click', toggleAutoScroll);
   btnRefresh.addEventListener('click', async () => {
     await api('/api/scan', { method: 'POST' });
     await loadLibrary();
@@ -376,6 +401,7 @@
   });
 
   // ---------- 启动 ----------
+  syncLocateBtn(); // 初始化按钮状态
   loadLibrary().catch(console.error);
   setInterval(() => { if (!current) loadLibrary().catch(() => {}); }, 15000); // 无选择时轮询状态
 })();

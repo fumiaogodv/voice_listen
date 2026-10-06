@@ -113,7 +113,12 @@ body {
 .ctl-btn:hover { background: var(--accent-soft); }
 .ctl-play { background: var(--accent); color: #fff; border-color: var(--accent); min-width: 56px; }
 .ctl-play:hover { background: #3c3489; }
-#btn-locate { margin-left: auto; }
+#btn-locate { margin-left: auto; transition: all 0.2s ease; }
+#btn-locate.on {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
 
 .player-progress {
   position: relative;
