@@ -7,7 +7,7 @@ services:
       # 你只需要往 host 端的 ./data/notes 里放笔记，其余由程序自动生成
       - ./data:/app/data
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8053:8000"
     environment:
       - TTS_VOICE=zh-CN-XiaoxiaoNeural
       - READ_NUMBER_AS_ORDINAL=1
