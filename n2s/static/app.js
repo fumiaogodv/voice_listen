@@ -21,6 +21,8 @@
   const timeCur = document.getElementById('time-cur');
   const timeDur = document.getElementById('time-dur');
   const btnRefresh = document.getElementById('btn-refresh');
+  const btnUpload = document.getElementById('btn-upload');
+  const fileInput = document.getElementById('file-input');
 
   let library = [];          // 全部文件摘要
   let current = null;        // 当前文件详情 {id, title, segments, ...}
@@ -423,6 +425,47 @@
   btnRefresh.addEventListener('click', async () => {
     await api('/api/scan', { method: 'POST' });
     await loadLibrary();
+  });
+
+  // ---------- 上传 ----------
+  btnUpload.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', async () => {
+    const files = fileInput.files;
+    if (!files || files.length === 0) return;
+
+    // 询问目标子目录（可留空表示直接放 notes 根目录）
+    const targetDir = prompt(
+      '上传到哪个子目录？（留空则放入根目录）\n例如：操作系统/第一章 进程管理\n或直接输入新分类名，会自动创建文件夹',
+      ''
+    );
+    if (targetDir === null) { fileInput.value = ''; return; } // 用户取消
+
+    const form = new FormData();
+    for (const f of files) {
+      form.append('files', f);
+    }
+    form.append('target_dir', (targetDir || '').trim());
+
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || '上传失败');
+
+      let msg = `已上传 ${data.saved.length} 个文件`;
+      if (data.skipped.length > 0) {
+        msg += `\n跳过 ${data.skipped.length} 个：` +
+          data.skipped.map((s) => s.name + '（' + s.reason + '）').join('、');
+      }
+      alert(msg);
+      await loadLibrary();
+    } catch (e) {
+      alert('上传失败：' + e.message);
+    } finally {
+      fileInput.value = ''; // 清空，允许重复选同一文件
+    }
   });
 
   // 关闭/切后台时补报进度（锁屏后定时器冻结，必须依赖事件）

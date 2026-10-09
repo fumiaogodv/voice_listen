@@ -46,6 +46,8 @@ body {
 
 .logo { font-size: 18px; font-weight: 600; color: var(--accent); }
 
+.sidebar-actions { display: flex; gap: 6px; }
+
 .icon-btn {
   border: 1px solid var(--border);
   background: var(--surface);

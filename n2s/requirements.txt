@@ -3,3 +3,4 @@ uvicorn[standard]
 edge-tts
 mutagen
 imageio-ffmpeg
+python-multipart
