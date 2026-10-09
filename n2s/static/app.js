@@ -47,48 +47,103 @@
   }
 
   // ---------- 侧栏 ----------
+  // 记录每个分类节点的展开状态：true=展开，false/未记录=收起
+  const expandedCats = {};
+
   function renderLibrary() {
-    const grouped = {};
+    // 按 category 层级构建树：tree[一级][二级]... = 文件数组
+    // 用嵌套对象表示，叶子是一个数组（文件列表）
+    const tree = {};
     library.forEach((f) => {
-      (grouped[f.category] || (grouped[f.category] = [])).push(f);
-    });
-    const cats = Object.keys(grouped).sort();
-    fileListEl.innerHTML = '';
-    cats.forEach((cat) => {
-      const head = document.createElement('div');
-      head.className = 'cat-head';
-      head.textContent = cat;
-      fileListEl.appendChild(head);
-
-      grouped[cat].forEach((f) => {
-        const item = document.createElement('div');
-        item.className = 'file-item' + (current && current.id === f.id ? ' active' : '');
-        item.dataset.id = f.id;
-
-        const name = document.createElement('span');
-        name.className = 'name';
-        name.textContent = f.title;
-
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        if (f.status === 'generating') badge.textContent = '转换中…';
-        else if (f.status === 'pending') badge.textContent = '排队中';
-        else if (f.status === 'failed') badge.textContent = '失败';
-        else if (f.finished) badge.textContent = '已听完';
-        else if (f.percent > 0) badge.textContent = '已听 ' + f.percent + '%';
-        else badge.textContent = '未开始';
-        if (f.finished) badge.className += ' done';
-        if (f.status === 'generating' || f.status === 'pending') badge.className += ' gen';
-
-        item.appendChild(name);
-        item.appendChild(badge);
-        item.addEventListener('click', () => openFile(f.id));
-        fileListEl.appendChild(item);
+      const parts = (f.category || '').split('/').filter(Boolean);
+      let node = tree;
+      parts.forEach((part) => {
+        if (!node[part]) node[part] = {};
+        node = node[part];
       });
+      // node 现在指向文件所属的最深分类节点，用 __files 存文件
+      if (!node.__files) node.__files = [];
+      node.__files.push(f);
     });
 
-    if (cats.length === 0) {
+    fileListEl.innerHTML = '';
+
+    // 当前播放文件所属的顶层分类名（用于自动展开）
+    let currentTopCat = null;
+    if (current) {
+      currentTopCat = (current.category || '').split('/').filter(Boolean)[0] || null;
+    }
+
+    function renderLevel(node, depth, parentPath) {
+      // 先渲染该层级直属的文件
+      if (node.__files && node.__files.length) {
+        node.__files.forEach((f) => {
+          const item = document.createElement('div');
+          item.className = 'file-item' + (current && current.id === f.id ? ' active' : '');
+          item.dataset.id = f.id;
+          item.style.paddingLeft = (12 + depth * 16) + 'px';
+
+          const name = document.createElement('span');
+          name.className = 'name';
+          name.textContent = f.title;
+
+          const badge = document.createElement('span');
+          badge.className = 'badge';
+          if (f.status === 'generating') badge.textContent = '转换中…';
+          else if (f.status === 'pending') badge.textContent = '排队中';
+          else if (f.status === 'failed') badge.textContent = '失败';
+          else if (f.finished) badge.textContent = '已听完';
+          else if (f.percent > 0) badge.textContent = '已听 ' + f.percent + '%';
+          else badge.textContent = '未开始';
+          if (f.finished) badge.className += ' done';
+          if (f.status === 'generating' || f.status === 'pending') badge.className += ' gen';
+
+          item.appendChild(name);
+          item.appendChild(badge);
+          item.addEventListener('click', () => openFile(f.id));
+          fileListEl.appendChild(item);
+        });
+      }
+
+      // 再渲染子分类目录（可折叠）
+      Object.keys(node)
+        .filter((k) => k !== '__files')
+        .sort()
+        .forEach((key) => {
+          const fullPath = parentPath ? parentPath + '/' + key : key;
+          // 展开状态：显式展开 或（当前播放文件的顶层分类自动展开）
+          const isTop = parentPath === '';
+          const isExpanded = expandedCats[fullPath] === true ||
+            (isTop && currentTopCat === fullPath);
+
+          const catHead = document.createElement('div');
+          catHead.className = 'cat-head';
+          catHead.style.paddingLeft = (8 + depth * 16) + 'px';
+          const arrow = document.createElement('span');
+          arrow.className = 'cat-arrow';
+          arrow.textContent = isExpanded ? '▾' : '▸';
+          const catName = document.createElement('span');
+          catName.className = 'cat-name';
+          catName.textContent = key;
+          catHead.appendChild(arrow);
+          catHead.appendChild(catName);
+          catHead.addEventListener('click', () => {
+            expandedCats[fullPath] = !isExpanded;
+            renderLibrary();
+          });
+          fileListEl.appendChild(catHead);
+
+          // 展开时渲染子内容
+          if (isExpanded) {
+            renderLevel(node[key], depth + 1, fullPath);
+          }
+        });
+    }
+
+    if (library.length === 0) {
       fileListEl.innerHTML = '<div class="placeholder">把 .md / .txt 文件放入 notes 目录后点刷新</div>';
+    } else {
+      renderLevel(tree, 0, '');
     }
   }
 

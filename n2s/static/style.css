@@ -63,7 +63,22 @@ body {
   color: var(--text-muted);
   font-weight: 600;
   letter-spacing: 1px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
 }
+.cat-head:hover { background: var(--accent-soft); }
+.cat-arrow {
+  display: inline-block;
+  width: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.cat-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .file-item {
   padding: 10px 12px;
