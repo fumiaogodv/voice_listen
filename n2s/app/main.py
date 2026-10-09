@@ -24,6 +24,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="NoteToSpeech", lifespan=lifespan)
 
+# 确保数据目录存在（Docker 挂载卷可能不预先创建这些子目录）
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+NOTES_DIR.mkdir(parents=True, exist_ok=True)
+
 # 静态资源
 app.mount("/audio", StaticFiles(directory=str(CACHE_DIR)), name="audio")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
